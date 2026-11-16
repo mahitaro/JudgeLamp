@@ -7,7 +7,7 @@
     <string name="button_start">ランプを表示する</string>
     <string name="button_stop">ランプを終了する</string>
 
-    <string name="section_triggers">赤にする判定</string>
+    <string name="section_triggers">ランプを点ける判定</string>
     <string name="trigger_great">GREAT</string>
     <string name="trigger_good">GOOD</string>
     <string name="trigger_miss">MISS</string>
@@ -19,7 +19,7 @@
     <string name="sensitivity_low">低(はっきり見えた文字だけ。誤って赤になるとき用)</string>
 
     <string name="howto_title">使い方</string>
-    <string name="howto_body">1. 「ランプを表示する」を押して、画面の読み取りを許可します。\n2. ゲームを開きます。ランプは画面の上のほうに出ます。\n3. 曲を始める前にランプをタップすると緑に戻ります。\n4. 選んだ判定が出ると赤になり、タップするまで赤のままです。\n5. ランプはドラッグで動かせます。画面中央の判定の文字には重ねないでください。</string>
+    <string name="howto_body">1. 「ランプを表示する」を押して、画面の読み取りを許可します。\n2. ゲームを開きます。ランプは画面の上のほうに出ます。\n3. 曲を始める前にランプをタップすると緑に戻ります。\n4. GREAT・GOODは、早く叩いたときは青、遅かったときは赤になります。MISSは黄色です。新しい判定が出るたびに色が変わり、タップで緑に戻ります。\n5. ランプはドラッグで動かせます。画面中央の判定の文字には重ねないでください。</string>
 
     <string name="toast_need_overlay">「他のアプリの上に重ねて表示」を許可してから、もう一度押してください</string>
     <string name="toast_started">ランプを表示しました。ゲームを開いてください</string>

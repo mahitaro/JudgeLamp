@@ -28,6 +28,9 @@ public class DetectorHarness {
         ByteBuffer buf = ByteBuffer.allocateDirect(stride * (h - 1) + w * 4);
         DataInputStream in = new DataInputStream(new BufferedInputStream(System.in, 1 << 22));
         PrintWriter out = new PrintWriter(a[4]);
+        app.judgelamp.TimingProbe probe = new app.judgelamp.TimingProbe();
+        int[] lastFired = {-100, -100, -100, -100, -100};
+        boolean[] strongNow = new boolean[1];
         long ns = 0;
         int n = 0;
         try {
@@ -38,13 +41,21 @@ public class DetectorHarness {
                     buf.put(frame);
                 }
                 long t0 = System.nanoTime();
+                probe.observe(buf, w, h, stride, 4);
                 int fired = det.process(buf, w, h, stride, 4);
                 ns += System.nanoTime() - t0;
+                for (int bit = 1; bit <= 4; bit <<= 1) {
+                    if ((fired & bit) == 0) continue;
+                    boolean onset = n - lastFired[bit] > 6;
+                    lastFired[bit] = n;
+                    if (!onset) continue;
+                    String timing = bit == 4 ? "-" : (probe.wasLate(det.lastConfirmDelay(bit)) ? "LATE" : "EARLY");
+                    System.out.printf("ONSET %d %s %s%n", n, bit == 1 ? "GREAT" : bit == 2 ? "GOOD" : "MISS", timing);
+                }
                 // columns: time, fired mask (1 GREAT, 2 GOOD, 4 MISS), then whole-word / half-word score per template
                 out.printf("%.3f %d %.3f %.3f %.3f %.3f %.3f %.3f%n", n / fps, fired,
                         tpl[0].lastFull, tpl[0].lastHalf, tpl[1].lastFull, tpl[1].lastHalf,
                         tpl[2].lastFull, tpl[2].lastHalf);
-                if (fired != 0) System.out.printf("FIRED %.3f s  mask=%d%n", n / fps, fired);
                 n++;
             }
         } catch (java.io.EOFException e) {

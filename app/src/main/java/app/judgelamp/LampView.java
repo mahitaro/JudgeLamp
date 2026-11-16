@@ -8,15 +8,19 @@ import android.view.View;
 /** The little round lamp that floats above the game. */
 final class LampView extends View {
 
-    private static final int GREEN = 0xFF1FE06A;
-    private static final int RED = 0xFFFF2A2A;
+    static final int STATE_GREEN = 0;  // nothing since the last tap
+    static final int STATE_EARLY = 1;  // GREAT / GOOD, hit early -> blue
+    static final int STATE_LATE = 2;   // GREAT / GOOD, hit late  -> red
+    static final int STATE_MISS = 3;   // MISS                    -> yellow
+
+    private static final int[] COLOURS = {0xFF1FE06A, 0xFF2F7BFF, 0xFFFF2A2A, 0xFFFFD60A};
 
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint shine = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final float density;
 
-    private boolean red;
+    private int state = STATE_GREEN;
     private float diameterPx;
 
     LampView(Context context) {
@@ -31,9 +35,9 @@ final class LampView extends View {
         invalidate();
     }
 
-    void setRed(boolean value) {
-        if (red != value) {
-            red = value;
+    void setState(int value) {
+        if (state != value) {
+            state = value;
             invalidate();
         }
     }
@@ -52,16 +56,17 @@ final class LampView extends View {
         float r = diameterPx / 2f - stroke / 2f;
         if (r <= 0) return;
 
-        fill.setColor(red ? RED : GREEN);
+        boolean lit = state != STATE_GREEN;
+        fill.setColor(COLOURS[state]);
         canvas.drawCircle(cx, cy, r, fill);
 
-        // Dark rim when green, white rim when red: the two states also differ by
-        // more than colour alone.
+        // Dark rim when green, white rim once something was found: the states also
+        // differ by more than colour alone.
         ring.setStrokeWidth(stroke);
-        ring.setColor(red ? 0xFFFFFFFF : 0xB3000000);
+        ring.setColor(lit ? 0xFFFFFFFF : 0xB3000000);
         canvas.drawCircle(cx, cy, r, ring);
 
-        if (!red) {
+        if (!lit) {
             canvas.drawCircle(cx - r * 0.3f, cy - r * 0.3f, r * 0.22f, shine);
         }
     }

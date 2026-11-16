@@ -58,6 +58,7 @@ public final class JudgeDetector {
         final float[] t; // high-passed pixels, w*h
         final double sumL, sumR, sqL, sqR;
         int streak;
+        int confirmDelay; // 0: recognised on its first frame, 1: needed a second frame
         public float lastFull, lastHalf;
 
         /**
@@ -129,6 +130,12 @@ public final class JudgeDetector {
         sensitivity = level;
     }
 
+    /** How many frames before the newest one the word of this judgment first showed (0 or 1). */
+    public int lastConfirmDelay(int bit) {
+        for (Template t : templates) if (t.bit == bit) return t.confirmDelay;
+        return 0;
+    }
+
     /** Forget half-confirmed detections (call when the lamp is reset). */
     public void reset() {
         for (Template t : templates) t.streak = 0;
@@ -196,10 +203,12 @@ public final class JudgeDetector {
             }
             if (strong) {
                 fired |= t.bit;
+                t.confirmDelay = t.streak > 0 ? 1 : 0;
                 t.streak = 0;
             } else if (weak) {
                 if (++t.streak >= 2) {
                     fired |= t.bit;
+                    t.confirmDelay = 1;
                     t.streak = 0;
                 }
             } else {

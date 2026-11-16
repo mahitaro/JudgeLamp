@@ -38,7 +38,8 @@ import java.io.InputStream;
 /**
  * Shows the lamp above other apps and watches the screen for the judgment text.
  *
- * Green means "watching, nothing found since the last reset". The lamp is removed
+ * Green means "watching, nothing found since the last reset". Blue = GREAT/GOOD hit
+ * early, red = GREAT/GOOD hit late, yellow = MISS; the newest one replaces the colour. The lamp is removed
  * whenever the screen capture ends, so a green lamp is never shown while nobody
  * is watching.
  */
@@ -61,6 +62,8 @@ public class LampService extends Service
     private static final int NOTIFICATION_ID = 1;
     /** Invisible touch area around the drawn lamp, in dp (total, both sides). */
     private static final int TOUCH_PADDING_DP = 8;
+    /** A judgment counts as new if its word was not seen for this many frames. */
+    private static final int ONSET_GAP = 6;
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
@@ -82,14 +85,17 @@ public class LampService extends Service
     private boolean landscape;
 
     private volatile int triggerMask;
-    private volatile boolean red;
+    private volatile int lampState = LampView.STATE_GREEN;
+    private TimingProbe probe;
+    private int frameNo;
+    private final int[] lastSeen = new int[5]; // frame number each judgment bit was last recognised
     private volatile boolean resetRequested;
     private boolean shuttingDown;
 
-    private final Runnable showRed = new Runnable() {
+    private final Runnable showState = new Runnable() {
         @Override
         public void run() {
-            if (lamp != null) lamp.setRed(red);
+            if (lamp != null) lamp.setState(lampState);
         }
     };
 
@@ -157,7 +163,7 @@ public class LampService extends Service
             if (resultData == null) throw new IllegalStateException("capture permission result missing");
 
             shuttingDown = false;
-            red = false;
+            lampState = LampView.STATE_GREEN;
             startCapture(resultCode, resultData);
             showLamp();
             running = true;
@@ -235,6 +241,9 @@ public class LampService extends Service
         projection.registerCallback(projectionCallback, main);
 
         detector = loadDetector();
+        probe = new TimingProbe();
+        frameNo = 0;
+        java.util.Arrays.fill(lastSeen, -1000);
         detector.setSensitivity(Prefs.sensitivity(prefs));
         triggerMask = Prefs.triggerMask(prefs);
 
@@ -286,13 +295,30 @@ public class LampService extends Service
                         resetRequested = false;
                         d.reset();
                     }
-                    if (red) continue; // already red: nothing more to find until the reset
                     Image.Plane plane = image.getPlanes()[0];
-                    int found = d.process(plane.getBuffer(), image.getWidth(), image.getHeight(),
-                            plane.getRowStride(), plane.getPixelStride());
-                    if ((found & triggerMask) != 0) {
-                        red = true;
-                        main.post(showRed);
+                    java.nio.ByteBuffer pixels = plane.getBuffer();
+                    int w = image.getWidth(), h = image.getHeight();
+                    int rowStride = plane.getRowStride(), pixelStride = plane.getPixelStride();
+                    frameNo++;
+                    probe.observe(pixels, w, h, rowStride, pixelStride);
+                    int found = d.process(pixels, w, h, rowStride, pixelStride);
+                    int newState = -1;
+                    for (int bit = 1; bit <= 4; bit <<= 1) {
+                        if ((found & bit) == 0) continue;
+                        // The word stays on screen for several frames: only its first frame counts.
+                        boolean onset = frameNo - lastSeen[bit] > ONSET_GAP;
+                        lastSeen[bit] = frameNo;
+                        if (!onset || (triggerMask & bit) == 0) continue;
+                        if (bit == JudgeDetector.BIT_MISS) {
+                            newState = LampView.STATE_MISS;
+                        } else {
+                            newState = probe.wasLate(d.lastConfirmDelay(bit))
+                                    ? LampView.STATE_LATE : LampView.STATE_EARLY;
+                        }
+                    }
+                    if (newState >= 0) { // the newest judgment always replaces the colour
+                        lampState = newState;
+                        main.post(showState);
                     }
                 } finally {
                     image.close();
@@ -327,7 +353,7 @@ public class LampService extends Service
         }
         lampParams.setTitle("JudgeLamp");
         layoutLamp(false);
-        lamp.setRed(false);
+        lamp.setState(LampView.STATE_GREEN);
         lamp.setOnTouchListener(new LampTouch());
         wm.addView(lamp, lampParams);
     }
@@ -356,9 +382,9 @@ public class LampService extends Service
     }
 
     private void resetLamp() {
-        red = false;
+        lampState = LampView.STATE_GREEN;
         resetRequested = true;
-        if (lamp != null) lamp.setRed(false);
+        if (lamp != null) lamp.setState(LampView.STATE_GREEN);
     }
 
     /** Tap = back to green. Drag = move the lamp. */
