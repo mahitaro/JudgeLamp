@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.judgelamp'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'app.judgelamp'
+        minSdk 29        // Android 10
+        targetSdk 34
+        versionCode 2
+        versionName '1.1'
+    }
+
+    // A fixed key kept in the project, so that every build (on any machine or on
+    // GitHub) can be installed over the previous one. Fine for a personal tool
+    // that is installed by hand; not meant for a store release.
+    signingConfigs {
+        shared {
+            storeFile file('../keystore/judgelamp.keystore')
+            storePassword 'judgelamp'
+            keyAlias 'judgelamp'
+            keyPassword 'judgelamp'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.shared
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.shared
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}

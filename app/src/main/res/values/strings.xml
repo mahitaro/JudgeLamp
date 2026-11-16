@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">判定ランプ</string>
+
+    <string name="status_on">ランプ表示中</string>
+    <string name="status_off">停止中</string>
+    <string name="button_start">ランプを表示する</string>
+    <string name="button_stop">ランプを終了する</string>
+
+    <string name="section_triggers">赤にする判定</string>
+    <string name="trigger_great">GREAT</string>
+    <string name="trigger_good">GOOD</string>
+    <string name="trigger_miss">MISS</string>
+
+    <string name="size_label">ランプの大きさ:%1$d dp</string>
+
+    <string name="section_sensitivity">感度</string>
+    <string name="sensitivity_normal">標準(エフェクトで隠れかけた文字も拾う)</string>
+    <string name="sensitivity_low">低(はっきり見えた文字だけ。誤って赤になるとき用)</string>
+
+    <string name="howto_title">使い方</string>
+    <string name="howto_body">1. 「ランプを表示する」を押して、画面の読み取りを許可します。\n2. ゲームを開きます。ランプは画面の上のほうに出ます。\n3. 曲を始める前にランプをタップすると緑に戻ります。\n4. 選んだ判定が出ると赤になり、タップするまで赤のままです。\n5. ランプはドラッグで動かせます。画面中央の判定の文字には重ねないでください。</string>
+
+    <string name="toast_need_overlay">「他のアプリの上に重ねて表示」を許可してから、もう一度押してください</string>
+    <string name="toast_started">ランプを表示しました。ゲームを開いてください</string>
+    <string name="toast_capture_denied">画面の読み取りが許可されなかったため、開始できませんでした</string>
+    <string name="toast_start_failed">ランプを開始できませんでした</string>
+    <string name="toast_capture_ended">画面の読み取りが終了したため、ランプを消しました</string>
+
+    <string name="channel_name">判定ランプ</string>
+    <string name="notification_title">判定ランプ 動作中</string>
+    <string name="notification_text">ランプをタップすると緑に戻ります</string>
+    <string name="action_reset">緑に戻す</string>
+    <string name="action_stop">終了</string>
+</resources>
